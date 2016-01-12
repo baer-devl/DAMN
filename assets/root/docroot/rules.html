@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='UTF-8'>
+    <title>DAMN welcome</title>
+    <style type="text/css">
+      body{
+	background-color:grey;
+      }
+      
+      #button {
+	  background-color:none;
+	  color:black;
+	  text-align:right;
+	  overflow: hidden;
+      }
+
+      #filled {
+	  position:absolute;
+	  left:0px;
+	  right:0px;
+	  top:0px;
+	  bottom:0px;
+	  display:block;
+	  margin: 5px;
+	  padding: 5px;
+	  background-color:#E6E6E6;
+	  border-style: solid;
+	  border-width: 1px;
+      }
+      
+      #icon {
+	  background-color:none;
+	  border-style: solid;
+	  border-width: 3px;
+	  text-align:center;
+	  height:36px;
+	  width:36px;
+	  cursor: pointer;
+	  cursor: hand;
+      }
+    </style>
+    
+    <script language="javascript" type="text/javascript">
+	function post(path, params, method) {
+	    method = method || "post";
+	    var form = document.createElement("form");
+	    form.setAttribute("method", method);
+	    form.setAttribute("action", path);
+
+	    for(var key in params) {
+		if(params.hasOwnProperty(key)) {
+		    var hiddenField = document.createElement("input");
+		    hiddenField.setAttribute("type", "hidden");
+		    hiddenField.setAttribute("name", key);
+		    hiddenField.setAttribute("value", params[key]);
+
+		    form.appendChild(hiddenField);
+		}
+	    }
+
+	    document.body.appendChild(form);
+	    form.submit();
+	}
+    </script>
+    
+    <script language="javascript" type="text/javascript">
+	var connection; // websocket connection
+	
+	function writeToRule (message) {
+	    var output = document.getElementById('rule');
+	    var json = JSON.parse(message);
+	    output.innerHTML = syntaxHighlight(JSON.stringify(json, undefined, 2));
+	    output.setAttribute("contenteditable", "true");
+	}
+	
+	function ws_connect() {
+	
+	    if ('WebSocket' in window) {
+		connection = new WebSocket('wss://' + window.location.host + '/rules' + window.location.search);
+		connection.onopen = function(ev) {
+		    console.log('CONNECTED');
+		};
+
+		connection.onclose = function(ev) {
+		    console.log('DISCONNECTED');
+		};
+
+		connection.onmessage = function(ev) {
+		    var code = ev.data.substr(0,3)
+		    var data = ev.data.substr(3);
+		    
+		    console.log(code);
+		    
+		    if(code === "001") {
+			console.log('receive rules');
+			//show rules
+			writeToRule(data);
+			
+		    } else
+			console.log('RECEIVED: ' + ev.data);
+		};
+
+		connection.onerror = function(ev) {
+		    writeToScreen("Connection error!");
+		};
+
+	    } else {
+		alert("No WebSocket available!");
+	    }
+	}
+    </script>
+  </head>
+  
+  <body ><!--onload="ws_connect()"><!--onload="post('https://192.168.0.6/test?blubb', {pin:'adsf'})">-->
+    <div id="filled">
+      <div>Rules</div>
+      <div id="button" style="height:42px;width:100%">
+	<img id="icon" src="save.png" title="Save" onclick=playpause(this)>
+      </div>
+      <div style="height:90%;width:100%;overflow:scroll">
+	<pre id="rule" style="background-color:white;height:100%;overflow:auto" spellcheck="false"></pre>
+      </div>
+    </div>
+  </body>
+</html>

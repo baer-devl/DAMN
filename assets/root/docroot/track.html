@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='UTF-8'>
+    <title>DAMN</title>
+    
+    <style type="text/css">
+      #header {
+	  background-color:white;
+	  color:black;
+	  text-align:center;
+	  overflow: hidden;
+	  padding: 5px 5px 0px 5px;
+      }
+      #icon {
+	  background-color:none;
+	  border-style: solid;
+	  border-width: 3px;
+	  text-align:center;
+	  height:36px;
+	  width:36px;
+	  cursor: pointer;
+	  cursor: hand;
+      }
+      #app {
+	  font-size: 28px;
+	  margin: 3px;
+	  text-align:left;
+	  padding-left:10px;
+	  overflow: auto;
+	  height:36px;
+	  line-height:36px;
+      }
+      #filled {
+	  position:absolute;
+	  left:0px;
+	  right:0px;
+	  top:53px;
+	  bottom:0px;
+	  display:block;
+	  margin: 13px;
+	  background-color:#E6E6E6;
+	  border-style: solid;
+	  border-width: 1px;
+      }
+      
+      pre {outline: 1px solid #ccc; margin: 5px; padding: 5px; background-color: white}
+      .string { color: green; }
+      .number { color: darkorange; }
+      .boolean { color: blue; }
+      .null { color: magenta; }
+      .key { color: red; }
+
+    </style>
+      <script src="https://google-code-prettify.googlecode.com/svn/loader/prettify.js"></script>
+	<link href='/SyntaxHighlighter/css/main.css' rel='stylesheet' type='text/css'>
+  <link href='/pub/sh/current/styles/shCore.css' rel='stylesheet' type='text/css'>
+  <link href='/pub/sh/current/styles/shThemeDefault.css' rel='stylesheet' type='text/css'>
+  <script src='/pub/sh/current/scripts/shCore.js' type='text/javascript'></script>
+  <script src='/pub/sh/current/scripts/shAutoloader.js' type='text/javascript'></script>
+  <script src='/pub/sh/current/scripts/shBrushXml.js' type='text/javascript'></script>
+  <script src='/pub/sh/current/scripts/shBrushJScript.js' type='text/javascript'></script>
+  <script src='/pub/sh/current/scripts/shBrushCss.js' type='text/javascript'></script>
+  <script src='/SyntaxHighlighter/scripts/main.js' type='text/javascript'></script>
+
+      
+      <script>
+	function playpause(img) {
+	  
+	  if(img.src.match(/play/)) {
+	      img.src = "pause.png";
+	      connection.send('002');
+	      document.getElementById('global').innerHTML = "";
+	      document.getElementById('code').innerHTML = "";
+	      
+	  }else{
+	      img.src = "play.png";
+	      connection.send('001');
+	  }
+	}
+      </script>
+      <script>
+	function output(inp) {
+	  var att = document.createAttribute("contenteditable");
+	  att.value = true;
+	  var div = document.getElementById("json")
+	  var pre = document.createElement('pre');
+	  pre.setAttributeNode(att);
+	  pre.innerHTML = inp;
+	  div.appendChild(pre);
+	}
+
+	function syntaxHighlight(json) {
+	    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+		var cls = 'number';
+		if (/^"/.test(match)) {
+		    if (/:$/.test(match)) {
+			cls = 'key';
+		    } else {
+			cls = 'string';
+		    }
+		} else if (/true|false/.test(match)) {
+		    cls = 'boolean';
+		} else if (/null/.test(match)) {
+		    cls = 'null';
+		}
+		return '<span class="' + cls + '">' + match + '</span>';
+	    });
+	}
+	
+	function putJson(json) {
+      json = {a:1,"b":"foo",c:[false,"false",null,"null",{d:{e:1.3e5,f:"1.3e5"}}]};
+	  var str = JSON.stringify(json, undefined, 2);
+
+	  output(syntaxHighlight(str));
+	}
+      </script>
+      <script>
+	function cursor(e) {
+	    switch(e.keyCode) {
+		case 37:
+		    // left key pressed
+		    break;
+		case 38:
+		    // up key pressed
+		    break;
+		case 39:
+		    // right key pressed
+		    sendStep();
+		    break;
+		case 40:
+		    // down key pressed
+		    break;  
+	    }   
+	}
+      </script>
+      <script language="javascript" type="text/javascript">
+	var connection; // websocket connection
+	var json;
+	
+	function strip(html) {
+	  var tmp = document.createElement("DIV");
+	  tmp.innerHTML = html;
+	  return tmp.textContent || tmp.innerText || "";
+	}
+	
+	function sendStep() {
+	    var output = document.getElementById('param');
+	    if(output.getAttribute("contenteditable")==="true"){
+		//@before
+		console.log("param");
+		
+	    }else{
+		//@after
+		output = document.getElementById('return');
+		console.log("return");
+	    }
+	
+	console.log(strip(output.innerHTML));
+	    json = JSON.parse(strip(output.innerHTML));
+	    connection.send('003' + JSON.stringify(json, undefined, 0));
+	}
+
+	function writeToScreen (message) {
+	console.log(message);
+// 	    var div = document.createElement('div');
+// 	    var output = document.getElementById('output');
+// 	    div.innerHTML = message;
+// 	    output.appendChild(div);
+// 	    output.scrollTop = output.scrollHeight;
+	}
+
+	function writeToParam (message) {
+	    var output = document.getElementById('param');
+// 	    var spl = message.split("}{")
+// 	    if(typeof spl !== 'undefined' && spl.length > 0) {
+// 	      console.log("|" + message + "|");
+// 	      }
+	    var json = JSON.parse(message);
+	    output.innerHTML = syntaxHighlight(JSON.stringify(json, undefined, 2));
+	    document.getElementById('return').setAttribute("contenteditable", "false");
+	    output.setAttribute("contenteditable", "true");
+	}
+	
+	function writeToReturn (message) {
+	    var output = document.getElementById('return');
+// 	    var spl = message.split("}{")
+// 	    if(typeof spl !== 'undefined' && spl.length > 0) {
+// 	      console.log("<" + message + ">");
+// 	      }
+	    var json = JSON.parse(message);
+	    output.innerHTML = syntaxHighlight(JSON.stringify(json, undefined, 2));
+	    document.getElementById('param').setAttribute("contenteditable", "false");
+	    output.setAttribute("contenteditable", "true");
+	}
+	
+	function writeToCode (message) {
+	    var output = document.getElementById('code');
+	    var regex = /<br\s*[\/]?>/gi;
+	    output.innerHTML = message.replace(regex, '\n');
+	    syntaxHighlighter.HighlightAll();
+	}
+	
+	function writeToGlobal (message) {
+	    var output = document.getElementById('global');
+	    var json = JSON.parse(message);
+	    output.innerHTML = syntaxHighlight(JSON.stringify(json, undefined, 2));
+	}
+	
+	function ws_connect() {
+	    if ('WebSocket' in window) {
+	    console.log(window.location.search);
+		connection = new WebSocket('wss://' + window.location.host + '/ws' + window.location.search);
+		connection.onopen = function(ev) {
+		    writeToScreen('CONNECTED');
+		    window.addEventListener("keydown", cursor, false);
+		    connection.send('000');
+		};
+
+		connection.onclose = function(ev) {
+		    writeToScreen('DISCONNECTED');
+		};
+
+		connection.onmessage = function(ev) {
+		    var code = ev.data.substr(0,3)
+		    var data = ev.data.substr(3);
+		    
+// 		    writeToScreen(code);
+		    
+		    if(code === "000") {
+			writeToScreen('undefined: ' + data);
+			
+		    }else if(code === "001") {
+			writeToScreen('pause: ' + data);
+			
+		    } else if(code === "002") {
+			writeToScreen('play: ' + data);
+			
+		    } else if(code === "003") {
+			writeToScreen('step: ' + data);
+			
+		    } else if(code === "004") {
+			writeToCode(data);
+			
+		    } else if(code === "005") {
+			writeToGlobal(data);
+			
+		    } else if(code === "006") {
+			writeToParam(data);
+			
+		    } else if(code === "008") {
+			writeToScreen('????8: ' + data);
+			
+		    } else if(code === "007") {
+			writeToReturn(data);
+			
+		    } else if(code === "009") {
+			writeToScreen('????9: ' + data);
+			
+		    } else if(code === "012") {
+			connection.close();
+			close();
+			
+		    } else
+			writeToScreen('RECEIVED: ' + ev.data);
+		};
+
+		connection.onerror = function(ev) {
+		    alert("WebSocket error");
+		};
+
+	    } else {
+		alert("WebSocket is not available!!!\n" +
+		      "Demo will not function.");
+	    }
+	}
+    </script>
+  </head>
+  <body onload="ws_connect()">
+
+    <div id="header">
+      <div style="float:left">
+	<img id="icon" src="play.png" title="Play" onclick=playpause(this)>
+	<img id="icon" src="step.png" title="Next Step" style="margin-right:5px" onclick=sendStep()>
+      </div>
+      <div style="float:right;float:right;margin-left:5px">
+	<a target="_blank" src="scripts.png" title="Scripts" href="http://google.at">
+	  <img id="icon" src="scripts.png" title="Scripts">
+	</a>
+      </div>
+      <div id="app" title="Tracked Application">Tracked Application</div>
+    </div>
+
+    <div id="filled">
+      <div style="height:40%;overflow:scroll">
+	<pre class="brush: java" id="code" style="width:100%;height:100%;overflow:auto"></pre>
+      </div>
+      <div style="height:60%;float:right;width:40%;overflow:scroll">
+	<pre id="global" style="background-color:white;height:100%;overflow:auto"></pre>
+      </div>
+      <div style="height:30%;width:60%;overflow:scroll">
+	<pre id="param" style="background-color:white;width:100%;height:100%;overflow:auto" spellcheck="false"></pre>
+      </div>
+      <div style="height:30%;width:60%;overflow:scroll">
+	<pre id="return" style="background-color:white;width:100%;height:100%;overflow:auto" spellcheck="false"></pre>
+      </div>
+    </div>
+
+  </body>
+</html>

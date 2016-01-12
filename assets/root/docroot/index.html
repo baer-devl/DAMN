@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='UTF-8'>
+    <title>DAMN welcome</title>
+    <style type="text/css">
+      body{
+	background-color:grey;
+      }
+      .mainbody{
+	position: absolute;
+	background-color:black;
+	top: 70px;
+	bottom: 100px;
+	left: 50px;
+	right: 50px;
+      }
+      #id {
+	  position:absolute;
+	  width:400px;
+	  top:50%;
+	  left:50%;
+	  margin:-200px 0 0 -200px;
+      }
+      #text {
+	  position:absolute;
+	  text-align:center;
+	  line-height:50px;
+	  height:50px;
+	  width:400px;
+	  top:50%;
+	  left:50%;
+	  margin: 100px 0 0 -200px;
+	  background-color:#252525;
+	  color:#8c8c8c;
+	  font-family:"Verdana, Geneva, sans-serif";
+	  font-size:27px;
+      }
+    </style>
+    
+    <script language="javascript" type="text/javascript">
+	function post(path, params, method) {
+	    method = method || "post";
+	    var form = document.createElement("form");
+	    form.setAttribute("method", method);
+	    form.setAttribute("action", path);
+
+	    for(var key in params) {
+		if(params.hasOwnProperty(key)) {
+		    var hiddenField = document.createElement("input");
+		    hiddenField.setAttribute("type", "hidden");
+		    hiddenField.setAttribute("name", key);
+		    hiddenField.setAttribute("value", params[key]);
+
+		    form.appendChild(hiddenField);
+		}
+	    }
+
+	    document.body.appendChild(form);
+	    form.submit();
+	}
+    </script>
+    
+    <script language="javascript" type="text/javascript">
+	var connection; // websocket connection
+	
+	function writeToScreen (message) {
+	    document.getElementById("text").innerHTML = message;
+	}
+	
+	function ws_connect() {
+	
+	    if ('WebSocket' in window) {
+		connection = new WebSocket('wss://' + window.location.host + '/ws?at.fhooe.mcm.faaaat');
+		connection.onopen = function(ev) {
+		    console.log('CONNECTED');
+		    writeToScreen('Waiting for Applications');
+		};
+
+		connection.onclose = function(ev) {
+		    console.log('DISCONNECTED');
+		    writeToScreen("Can't connect to device!");
+		};
+
+		connection.onmessage = function(ev) {
+		    var code = ev.data.substr(0,3)
+		    var data = ev.data.substr(3);
+		    
+		    console.log(code);
+		    
+		    if(code === "000") {
+			console.log('open new window for ' + data);
+			window.open('https://' + window.location.host + '/track.html?' + data);
+			
+		    } else if(code === "001") {
+			console.log('receive pin');
+			//show pin
+			//TODO
+			
+			
+		    } else if(code === "002") {
+			console.log('accept');
+			//show what to do
+			//TODO
+			
+			
+		    } else if(code === "003") {
+			console.log('decline');
+			//show that the device did not accept
+			//TODO
+			
+			
+		    } else
+			console.log('RECEIVED: ' + ev.data);
+		};
+
+		connection.onerror = function(ev) {
+		    writeToScreen("Connection error!");
+		};
+
+	    } else {
+		alert("No WebSocket available!");
+	    }
+	}
+    </script>
+  </head>
+  
+  <body onload="ws_connect()"><!--onload="post('https://192.168.0.6/test?blubb', {pin:'adsf'})">-->
+    <div class="mainbody">
+      <img id="id" src="hack0.png"></img>
+      <div id="text" >Connect ...</div>
+    </div>
+  </body>
+</html>
